@@ -2,12 +2,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../src/screens/LoginScreen';
 import RegisterScreen from '../src/screens/RegisterScreen';
-import HomeScreen from '../src/screens/HomeScrenn';
+import HomeScreen from '../src/screens/HomeScrenn'; 
 
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
-  Home: undefined;
+  Home: undefined; // NOTE: Ce chemin devrait mener vers MainTabs si l'utilisateur est connecté
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();

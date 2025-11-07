@@ -44,27 +44,6 @@ export default function PropertyDetailScreen({ route }) { //1:image 2:video 3:im
           }
         })}
 
-        {/* {property.images.map((uri) => {
-          const isVideo = uri.match(/\.(mp4|mov|avi|mkv|webm)$/i);
-
-          return isVideo ? (
-            <Video
-              key={uri}
-              source={{ uri }}
-              style={styles.detailVideo}
-              useNativeControls
-              resizeMode="contain"
-              isLooping
-            />
-          ) : (
-            <Image
-              key={uri}
-              source={{ uri }}
-              style={styles.detailImage}
-            />
-          );
-        })} */}
-
       </ScrollView>
 
       <View style={styles.detailInfo}>

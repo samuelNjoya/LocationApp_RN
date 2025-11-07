@@ -1,14 +1,28 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Button, Alert, Text, ScrollView, Image, TouchableOpacity, Platform, KeyboardAvoidingView, } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useProperties } from '../../contexts/PropertyContext';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { Video } from 'expo-av';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+// Contextes et composants
+import { useProperties } from '../../contexts/PropertyContext';
+import { useAuth } from '../../contexts/AuthContext'; // <--- IMPORT AJOUTÉ
 import Spinner from '../components/Spinner';
 import { useToast } from 'react-native-toast-notifications';
+
+// Icônes
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 
+
+// Définition du typage de navigation (ajustez selon votre structure réelle)
+type RootStackParamList = {
+  Publish: undefined;
+  // Ajoutez d'autres écrans si nécessaire
+};
+
+type PublishScreenProps = NativeStackScreenProps<RootStackParamList, 'Publish'>;
 
 // Schéma de validation avec Yup pour les champs du formulaire
 const validationSchema = Yup.object().shape({
@@ -21,10 +35,11 @@ const validationSchema = Yup.object().shape({
   images: Yup.array().min(1, 'Au moins une image est requise'),
 });
 
-export default function PublishScreen() {
+export default function PublishScreen({ navigation }: PublishScreenProps) {
   const { addProperty } = useProperties();
+  const { user } = useAuth(); // <--- UTILISATION DU CONTEXTE AUTH
   const Toast = useToast();
-  const [imageUris, setImageUris] = useState([]);
+  const [imageUris, setImageUris] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Demande les permissions et ouvre la galerie pour sélectionner plusieurs images
@@ -40,16 +55,16 @@ export default function PublishScreen() {
       let result = await ImagePicker.launchImageLibraryAsync({
         allowsMultipleSelection: true,
         quality: 0.7,
-        mediaTypes: ['images', 'videos'], // pour ne sélectionner que les images  mediaTypes: ['images', 'videos'] pour les vidéos,
+        mediaTypes: ImagePicker.MediaTypeOptions.All, // Permet images et vidéos
       });
 
       if (!result.canceled) {
-        // Si sélection multiple, concatène sinon ajoute un seul
-        // const uris = result.selected ? result.selected.map(img => img.uri) : [result.uri];
         const uris = result.assets ? result.assets.map(asset => asset.uri) : [];
-
-        //console.log('Images sélectionnées:', uris);
         setImageUris((prev) => [...prev, ...uris]);
+
+        // Mettre à jour Formik manuellement (bien que Formik soit mis à jour dans onSubmit)
+        // C'est juste pour s'assurer que Yup voie la liste dans la validation live
+        // Pas nécessaire ici mais bonne pratique si la validation est en temps réel
       }
     } catch (error) {
       Alert.alert('Erreur', 'Impossible de sélectionner des images.');
@@ -58,9 +73,14 @@ export default function PublishScreen() {
   };
 
   // Supprimer une image choisie
-  const removeImage = (uri) => {
+  const removeImage = (uri: string) => {
     setImageUris((prev) => prev.filter(imgUri => imgUri !== uri));
   };
+
+  const isVideo = (uri: string): boolean => {
+    return /\.(mp4|mov|avi|mkv|webm)$/i.test(uri); // Vérifie l'extension video
+  };
+
 
   return (
     <Formik
@@ -71,28 +91,32 @@ export default function PublishScreen() {
         location: '',
         bedrooms: '',
         bathrooms: '',
-        images: [],
+        images: [], // Ceci est utilisé uniquement pour la validation Yup
       }}
       validationSchema={validationSchema}
       onSubmit={(values, { resetForm }) => {
-        // Remplacer images par la liste des URIs sélectionnées
+
+        if (!user?.id) {
+          Alert.alert('Erreur', 'Vous devez être connecté pour publier une annonce.');
+          return;
+        }
+
+        // --- CRITIQUE : AJOUT DU ownerId DE L'UTILISATEUR ---
         const newProperty = {
-          id: Date.now().toString(),
+          id: Date.now(),
           title: values.title,
-          price: parseInt(values.price),
+         // price: parseInt(values.price as string),
+         price: parseInt(values.price),
           description: values.description,
           location: values.location,
+          // bedrooms: parseInt(values.bedrooms as string),
+          // bathrooms: parseInt(values.bathrooms as string),
           bedrooms: parseInt(values.bedrooms),
           bathrooms: parseInt(values.bathrooms),
           images: imageUris,
-          owner: 'Vous',
+          owner: user.name || 'Inconnu', // Affichage
+          ownerId: user.id, // <--- SOLUTION : AJOUT DU ownerId POUR LE FILTRAGE !
         };
-
-        // addProperty(newProperty);
-        // Alert.alert('Succès', 'Annonce publiée avec succès!');
-        // resetForm();
-        // setImageUris([]);
-
 
         setIsLoading(true);
         setTimeout(() => {
@@ -102,9 +126,8 @@ export default function PublishScreen() {
             type: 'success',
             placement: "top",
             duration: 2000,
-            offset: 90,
-            animationType: "zoom-in", // "slide-in" | "zoom-in" | "fade-in"
-            dangerIcon: <AntDesign name="closecircle" size={24} color="white" />,
+         //   offset: 90,
+            animationType: "zoom-in",
             successIcon: <Ionicons name="checkmark-circle-sharp" size={24} color="white" />
           });
           resetForm();
@@ -181,29 +204,15 @@ export default function PublishScreen() {
 
             {/* Sélecteur d’images */}
             <View style={styles.imagePickerContainer}>
-              <Button title="Choisir des photos" onPress={pickImages} />
-              {errors.images && <Text style={styles.errorText}>{errors.images}</Text>}
+              <Button color="#2a9d8f" title={`Choisir des photos/vidéos (${imageUris.length})`} onPress={pickImages} />
+              {imageUris.length === 0 && <Text style={styles.errorText}>Au moins une image ou vidéo est requise.</Text>}
 
-              {/* Aperçu des images sélectionnées  */}
-
-              {/* <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.imagePreviewContainer}>
-                {imageUris.map((uri) => (
-                  <View key={uri} style={styles.imageWrapper}>
-                    <Image source={{ uri:uri }} style={styles.imagePreview} /> 
-                    <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
-                      <Text style={styles.removeButtonText}>X</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView> */}
-
+              {/* Aperçu des images sélectionnées  */}
               <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.imagePreviewContainer}>
                 {imageUris.map((uri) => {
-                  const isVideo = uri.match(/\.(mp4|mov|avi|mkv|webm)$/i); // Vérifie l'extension video
-                  console.log('URI de l\'image ou vidéo:', uri, 'Est-ce une vidéo ?', isVideo);
                   return (
                     <View key={uri} style={styles.imageWrapper}>
-                      {isVideo ? (
+                      {isVideo(uri) ? (
                         <Video
                           source={{ uri }}
                           style={styles.videoPreview}
@@ -228,14 +237,14 @@ export default function PublishScreen() {
             <TouchableOpacity style={styles.submitButton} onPress={() => {
               // Valide aussi la présence d'au moins une image avant soumission
               if (imageUris.length === 0) {
-                Alert.alert('Erreur', 'Veuillez sélectionner au moins une image.');
+                Alert.alert('Erreur', 'Veuillez sélectionner au moins une image ou vidéo.');
                 return;
               }
               // Met à jour la value images dans Formik pour la validation
-              values.images = imageUris;
+              values.images = imageUris as any; // Type assertion pour la validation
               handleSubmit();
             }}>
-              <Text style={styles.submitButtonText}>Publier</Text>
+              <Text style={styles.submitButtonText}>Publier l'Annonce</Text>
             </TouchableOpacity>
             <Spinner visible={isLoading} />
           </ScrollView>
@@ -249,6 +258,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingVertical: 20,
+    paddingBottom: 50, // pour laisser de l'espace en bas
   },
   input: {
     backgroundColor: 'white',
@@ -258,22 +268,37 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 16,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   errorText: {
     color: '#e63946',
     marginBottom: 8,
+    fontWeight: '500',
   },
   imagePickerContainer: {
     marginTop: 10,
     marginBottom: 20,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   imagePreviewContainer: {
     marginTop: 10,
+    maxHeight: 120,
   },
   videoPreview: {
     width: 100,
     height: 100,
     borderRadius: 12,
+    backgroundColor: '#000',
   },
   imageWrapper: {
     position: 'relative',
@@ -294,17 +319,25 @@ const styles = StyleSheet.create({
     height: 26,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   removeButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: 14,
   },
   submitButton: {
     backgroundColor: '#2a9d8f',
-    height: 50,
+    height: 55,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   submitButtonText: {
     color: 'white',

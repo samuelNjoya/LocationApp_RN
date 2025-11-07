@@ -24,3 +24,5 @@ rmdir /s /q node_modules && del package-lock.json
  npm install --legacy-peer-deps
 
 un petit script .bat (fichier Windows) que tu pourras lancer à chaque fois pour faire ce nettoyage automatique ? interressant
+
+installer les types pour uid npx expo install @types/uuid

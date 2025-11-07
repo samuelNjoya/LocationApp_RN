@@ -8,7 +8,8 @@ export interface PropertyHome {
   location: string;
   bedrooms: number;
   bathrooms: number;
-  owner: string;
+  owner?:string;
+  ownerId: string; //car la generation de l'id se fait en string et actuellement par defaut je recupere le nom en string
 }
 
 
@@ -25,7 +26,7 @@ const defaultProperties = [
         location: 'Yaoundé',
         bedrooms: 3,
         bathrooms: 2,
-        owner: 'Alice',
+        ownerId: 'Alice',
     },
     {
         id: 2,
@@ -38,7 +39,7 @@ const defaultProperties = [
         location: 'Douala',
         bedrooms: 5,
         bathrooms: 4,
-        owner: 'Bob',
+        ownerId: 'Bob',
     },
     {
         id: 3,
@@ -51,7 +52,7 @@ const defaultProperties = [
         location: 'Kribi',
         bedrooms: 5,
         bathrooms: 4,
-        owner: 'Bob',
+        ownerId: 'Bob',
     },
     {
         id: 4,
@@ -64,7 +65,7 @@ const defaultProperties = [
         location: 'Kribi',
         bedrooms: 5,
         bathrooms: 4,
-        owner: 'Bob',
+        ownerId: 'Bob',
     },
     {
         id: 5,
@@ -78,7 +79,7 @@ const defaultProperties = [
         location: 'Kribi',
         bedrooms: 5,
         bathrooms: 4,
-        owner: 'Bob',
+        ownerId: 'Bob',
     },
     {
         id: 6,
@@ -92,7 +93,7 @@ const defaultProperties = [
         location: 'Kribi',
         bedrooms: 5,
         bathrooms: 4,
-        owner: 'Bob',
+        ownerId: 'Bob',
     },
     // ... (tes autres propriétés)
 ];

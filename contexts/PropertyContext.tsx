@@ -1,20 +1,22 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import defaultProperties, { PropertyHome } from '../src/components/Data/defaultProperties';
+import { useAuth } from './AuthContext';
 
-const STORAGE_KEY = 'properties_storage_key';
-const STORAGE_KEY_FAVORITES = 'favorites_storage_key';
+const STORAGE_KEY_PROPERTIES = 'properties_storage_key';
+const BASE_STORAGE_KEY_FAVORITES = 'favorites_storage_key';
 
 // 👇 Définition du type de contexte
 interface PropertyContextType {
   properties: PropertyHome[];
   addProperty: (property: PropertyHome) => void;
-  deleteProperty: (id: number) => void;
+  deleteProperty: (id: number | string) => void;
   modifyProperty: (property: PropertyHome) => void;
-  favorites: number[];
-  addFavorite: (id: number) => void;
-  removeFavorite: (id: number) => void;
-  toggleFavorite: (id: number) => void;
+  //favorites: number[];
+  favorites: (number | string)[]; // Mise à jour du type ID
+  addFavorite: (id: number | string) => void;
+  removeFavorite: (id: number | string) => void;
+  toggleFavorite: (id: number | string) => void;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
@@ -25,45 +27,103 @@ interface PropertyProviderProps {
 }
 
 export const PropertyProvider: React.FC<PropertyProviderProps> = ({ children }) => {
+  const { user } = useAuth(); // <--- RÉCUPÉRATION DE L'UTILISATEUR CONNECTÉ
+  const userId = user?.id || 'anonymous'; // Utilise l'ID de l'utilisateur ou 'anonymous' si déconnecté
   const [properties, setProperties] = useState<PropertyHome[]>([]);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<(number | string)[]>([]);
+  // Fonction utilitaire pour générer la clé de favoris spécifique à l'utilisateur
+  const getFavoritesStorageKey = (id: string): string => `${BASE_STORAGE_KEY_FAVORITES}_${id}`;
 
   // Charger les données au démarrage
-  useEffect(() => {
-    async function loadProperties() {
-      try {
-        const data = await AsyncStorage.getItem(STORAGE_KEY);
-        const favData = await AsyncStorage.getItem(STORAGE_KEY_FAVORITES);
+  // useEffect(() => {
+  //   async function loadProperties() {
+  //     try {
+  //       const data = await AsyncStorage.getItem(STORAGE_KEY);
+  //       const favData = await AsyncStorage.getItem(STORAGE_KEY_FAVORITES);
 
+  //       if (data) {
+  //         setProperties(JSON.parse(data));
+  //       } else {
+  //         setProperties(defaultProperties);
+  //         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultProperties));
+  //       }
+
+  //       if (favData) setFavorites(JSON.parse(favData));
+  //     } catch (error) {
+  //       console.error("Erreur chargement properties:", error);
+  //       setProperties(defaultProperties);
+  //     }
+  //   }
+  //   loadProperties();
+  // }, []);
+
+  // Charger les données au démarrage ET lorsque l'utilisateur change
+  useEffect(() => {
+    async function loadData() {
+      // 1. Charger les propriétés (Globales)
+      try {
+        const data = await AsyncStorage.getItem(STORAGE_KEY_PROPERTIES);
         if (data) {
           setProperties(JSON.parse(data));
         } else {
+          // Si rien, initialise avec les données par défaut
           setProperties(defaultProperties);
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultProperties));
+          await AsyncStorage.setItem(STORAGE_KEY_PROPERTIES, JSON.stringify(defaultProperties));
         }
-
-        if (favData) setFavorites(JSON.parse(favData));
       } catch (error) {
         console.error("Erreur chargement properties:", error);
         setProperties(defaultProperties);
       }
-    }
-    loadProperties();
-  }, []);
 
+      // 2. Charger les favoris (Spécifiques à l'utilisateur)
+      const favKey = getFavoritesStorageKey(userId);
+      try {
+        const favData = await AsyncStorage.getItem(favKey);
+        if (favData) {
+          setFavorites(JSON.parse(favData));
+        } else {
+          // Utilisateur n'a pas encore de favoris, on initialise à vide
+          setFavorites([]);
+        }
+      } catch (error) {
+        console.error(`Erreur chargement favoris pour ${userId}:`, error);
+        setFavorites([]);
+      }
+    }
+
+    // Le chargement est déclenché au montage et à chaque changement de userId (connexion/déconnexion)
+    loadData();
+
+    // Nettoyage : si l'utilisateur change, on pourrait vouloir effacer l'état local avant le rechargement
+    return () => {
+      // Optionnel: vous pouvez ajouter ici une logique pour gérer la déconnexion
+    };
+  }, [userId]); // <--- DÉPENDANCE CRUCIALE : RECHARGEMENT LORSQUE L'ID UTILISATEUR CHANGE
+
+  
   const saveProperties = async (newProperties: PropertyHome[]) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newProperties));
+      await AsyncStorage.setItem(STORAGE_KEY_PROPERTIES, JSON.stringify(newProperties));
     } catch (error) {
       console.log("Erreur sauvegarde properties:", error);
     }
   };
 
-  const saveFavorites = async (newFavorites: number[]) => {
+  // const saveFavorites = async (newFavorites: number[]) => {
+  //   try {
+  //     await AsyncStorage.setItem(STORAGE_KEY_FAVORITES, JSON.stringify(newFavorites));
+  //   } catch (error) {
+  //     console.log("Erreur sauvegarde favorites:", error);
+  //   }
+  // };
+
+  // 2. Sauvegarde des favoris spécifiques à l'utilisateur
+  const saveFavorites = async (newFavorites: (number | string)[], currentUserId: string) => {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY_FAVORITES, JSON.stringify(newFavorites));
+      const key = getFavoritesStorageKey(currentUserId);
+      await AsyncStorage.setItem(key, JSON.stringify(newFavorites));
     } catch (error) {
-      console.log("Erreur sauvegarde favorites:", error);
+      console.log(`Erreur sauvegarde favoris pour ${currentUserId}:`, error);
     }
   };
 
@@ -73,7 +133,7 @@ export const PropertyProvider: React.FC<PropertyProviderProps> = ({ children }) 
     saveProperties(newList);
   };
 
-  const deleteProperty = (id: number) => {
+  const deleteProperty = (id: number | string) => {
     const newList = properties.filter(p => p.id !== id);
     setProperties(newList);
     saveProperties(newList);
@@ -81,7 +141,7 @@ export const PropertyProvider: React.FC<PropertyProviderProps> = ({ children }) 
     if (favorites.includes(id)) {
       const newFavs = favorites.filter(favId => favId !== id);
       setFavorites(newFavs);
-      saveFavorites(newFavs);
+      saveFavorites(newFavs,userId);
     }
   };
 
@@ -91,23 +151,23 @@ export const PropertyProvider: React.FC<PropertyProviderProps> = ({ children }) 
     saveProperties(newList);
   };
 
-  const addFavorite = (id: number) => {
+  const addFavorite = (id: number | string) => {
     if (!favorites.includes(id)) {
       const newFavs = [...favorites, id];
       setFavorites(newFavs);
-      saveFavorites(newFavs);
+      saveFavorites(newFavs,userId);
     }
   };
 
-  const removeFavorite = (id: number) => {
+  const removeFavorite = (id: number | string) => {
     if (favorites.includes(id)) {
       const newFavs = favorites.filter(favId => favId !== id);
       setFavorites(newFavs);
-      saveFavorites(newFavs);
+      saveFavorites(newFavs,userId); //Id de l'utilisateur
     }
   };
 
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = (id: number | string) => {
     favorites.includes(id) ? removeFavorite(id) : addFavorite(id);
   };
 

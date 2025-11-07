@@ -3,23 +3,19 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
-import { ToastProvider } from 'react-native-toast-notifications';
-
 // Importez vos composants/contextes
-// NOTE: J'ai corrigé HomeScrenn en HomeScreen, si cela n'était pas une faute de frappe, veuillez le rétablir.
 import HomeScreen from '../src/screens/HomeScrenn';
 import ListingsStack from '../src/components/Data/ListingsStack';
 import ProfileStack from '../src/components/Data/ProfileStack';
 import FavoritesStack from '../src/components/Data/FavoritesStack';
 import PublishScreen from '../src/screens/PublishScreen';
-import { PropertyProvider } from '../contexts/PropertyContext';
 import { COLORS } from '../assets/Theme';
-import RootNavigator from './navigation/RootNavigator';
+
 
 const Tab = createBottomTabNavigator();
 
 // --- NOUVEAU COMPOSANT : Gère la navigation et la zone de sécurité ---
-function MainTabNavigator() {
+export default function MainTabNavigator() {
   // 1. Utilisez le hook pour obtenir les marges du système (insets)
   const insets = useSafeAreaInsets();
   const baseHeight = 60; // Hauteur de base de votre tab bar
@@ -31,19 +27,19 @@ function MainTabNavigator() {
           let iconName;
           if (route.name === 'Accueil') {
             iconName = 'home';
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <Ionicons name={iconName as any} size={size} color={color} />;
           } else if (route.name === 'Annonces') {
             iconName = 'building';
             return <FontAwesome5 name={iconName} size={size} color={color} />;
           } else if (route.name === 'Publier') {
             iconName = 'plus-box';
-            return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
+            return <MaterialCommunityIcons name={iconName as any} size={size} color={color} />;
           } else if (route.name === 'Profil') {
             iconName = 'person';
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return <Ionicons name={iconName as any} size={size} color={color} />;
           } else if (route.name === 'Favoris') {
             iconName = 'heart';
-            return <AntDesign name={iconName} size={size} color={color} />;
+            return <AntDesign name={iconName as any} size={size} color={color} />;
           }
         },
         tabBarActiveTintColor: COLORS.greenColors,
