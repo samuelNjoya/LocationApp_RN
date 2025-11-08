@@ -1,30 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, FlatList, TextInput, StyleSheet, Text, TouchableOpacity, Modal } from 'react-native';
 import PropertyCard from '../components/PropertyCard';
 import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // Ajouté pour les flèches du sélecteur
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'; // Ajouté pour l'icône de table
+
+// Assurez-vous d'importer COLORS et d'utiliser la bonne structure de dossiers
+import { COLORS } from '../../assets/Theme'; 
 import { useProperties } from '../../contexts/PropertyContext';
-import { COLORS } from '../../assets/Theme';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { DataTable } from 'react-native-paper';
+import { DataTable } from 'react-native-paper'; // Importé pour le composant de pagination
 
-export default function ListingsScreen({ navigation }: any) {
+export default function ListingsScreen({ navigation }) {
 
-  const { properties } = useProperties(); // Utiliser le contexte pour obtenir les propriétés
+  const { properties } = useProperties();
   const [searchText, setSearchText] = useState('');
 
   // 1. ÉTATS DE PAGINATION
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10); // Valeur par défaut
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const pageOptions = [5, 10, 25, 50]; // Options pour le sélecteur d'éléments
-
-  // Assurer que properties est un tableau
-  // const filtered = Array.isArray(properties)
-  //   ? properties.filter(p =>
-  //     p.title.toLowerCase().includes(searchText.toLowerCase()) ||
-  //     p.location.toLowerCase().includes(searchText.toLowerCase())
-  //   )
-  //   : [];
+  const pageOptions = [10, 25, 50]; // Options pour le sélecteur d'éléments
 
   // 2. FILTRAGE DES DONNÉES (useMemo)
   const filteredProperties = useMemo(() => {
@@ -36,7 +31,7 @@ export default function ListingsScreen({ navigation }: any) {
       p.location.toLowerCase().includes(searchText.toLowerCase())
     );
   }, [searchText, properties]);
-
+  
   // 3. CALCULS DE PAGINATION
   const totalItems = filteredProperties.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -55,7 +50,7 @@ export default function ListingsScreen({ navigation }: any) {
     setCurrentPage(0); // Réinitialiser à la première page
     setDropdownVisible(false);
   };
-
+  
   // Fonction pour changer de page
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -63,16 +58,14 @@ export default function ListingsScreen({ navigation }: any) {
     // if (listRef.current) { listRef.current.scrollToOffset({ offset: 0, animated: true }); }
   };
 
-
   return (
     <View style={styles.listingsContainer}>
       <View style={styles.searchInputContainer}>
-        <Feather name="search" size={24} color="black" />
+        <Feather name="search" size={20} color={COLORS.gray} />
         <TextInput
           style={styles.searchInput}
           placeholder="Rechercher par titre ou lieu..."
           value={searchText}
-          // onChangeText={setSearchText}
           onChangeText={(text) => {
             setSearchText(text);
             setCurrentPage(0); // Réinitialiser la page lors de la recherche
@@ -102,26 +95,26 @@ export default function ListingsScreen({ navigation }: any) {
             </TouchableOpacity>
 
             <Modal
-              transparent={true}
-              visible={dropdownVisible}
-              onRequestClose={() => setDropdownVisible(false)}
+                transparent={true}
+                visible={dropdownVisible}
+                onRequestClose={() => setDropdownVisible(false)}
             >
-              <TouchableOpacity
-                style={styles.modalOverlay}
-                onPress={() => setDropdownVisible(false)}
-              >
-                <View style={[styles.dropdownOptions, { top: 0, right: 15 }]}>
-                  {pageOptions.map((value) => (
-                    <TouchableOpacity
-                      key={value}
-                      style={styles.dropdownOption}
-                      onPress={() => handleSelectValue(value)}
-                    >
-                      <Text style={styles.dropdownOptionText}>{String(value)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    onPress={() => setDropdownVisible(false)}
+                >
+                    <View style={[styles.dropdownOptions, { top: 0, right: 15 }]}>
+                        {pageOptions.map((value) => (
+                            <TouchableOpacity
+                                key={value}
+                                style={styles.dropdownOption}
+                                onPress={() => handleSelectValue(value)}
+                            >
+                                <Text style={styles.dropdownOptionText}>{String(value)}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </TouchableOpacity>
             </Modal>
 
           </View>
@@ -150,7 +143,7 @@ export default function ListingsScreen({ navigation }: any) {
       />
 
       {/* 7. COMPOSANT DE PAGINATION INFÉRIEUR */}
-      {/* {totalPages > 1 && (
+      {totalPages > 1 && (
         <DataTable.Pagination
           page={currentPage}
           numberOfPages={totalPages}
@@ -161,23 +154,15 @@ export default function ListingsScreen({ navigation }: any) {
           // Customisation des couleurs pour s'aligner avec votre palette (si COLORS.primary est défini)
           color={COLORS.primary || 'blue'}
         />
-      )} */}
-
-      {totalItems > 0 && ( // Condition pour s'assurer qu'il y a au moins 1 élément (et donc totalPages >= 1)
-        <DataTable.Pagination
-          page={currentPage}
-          numberOfPages={totalPages}
-          onPageChange={handlePageChange}
-          label={`Page ${currentPage + 1} sur ${totalPages}`}
-          showFastPaginationControls
-          style={styles.paginationControls}
-          color={COLORS.primary || 'blue'}
-        />
       )}
 
     </View>
   );
 }
+
+// =========================================================================================
+// STYLES AJUSTÉS ET NOUVEAUX STYLES
+// =========================================================================================
 
 const styles = StyleSheet.create({
   listingsContainer: {
@@ -249,9 +234,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.gray,
   },
-  dropdownOptionText: {
-    fontSize: 14,
-    color: COLORS.secondary
+  dropdownOptionText: { 
+    fontSize: 14, 
+    color: COLORS.secondary 
   },
   modalOverlay: {
     flex: 1,

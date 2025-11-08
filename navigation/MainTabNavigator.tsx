@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons, AntDesign, Feather } from '@expo/vector-icons';
 // Importez vos composants/contextes
 import HomeScreen from '../src/screens/HomeScrenn';
 import ListingsStack from '../src/components/Data/ListingsStack';
@@ -10,6 +10,7 @@ import ProfileStack from '../src/components/Data/ProfileStack';
 import FavoritesStack from '../src/components/Data/FavoritesStack';
 import PublishScreen from '../src/screens/PublishScreen';
 import { COLORS } from '../assets/Theme';
+import SettingsScreen from '../src/screens/SettingsScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -40,6 +41,9 @@ export default function MainTabNavigator() {
           } else if (route.name === 'Favoris') {
             iconName = 'heart';
             return <AntDesign name={iconName as any} size={size} color={color} />;
+            } else if (route.name === 'Paramètre') {
+            iconName = 'settings';
+            return <Feather name={iconName as any} size={size} color={color} />;
           }
         },
         tabBarActiveTintColor: COLORS.greenColors,
@@ -67,6 +71,7 @@ export default function MainTabNavigator() {
       <Tab.Screen name="Publier" component={PublishScreen} />
       <Tab.Screen name="Profil" component={ProfileStack} />
       <Tab.Screen name="Favoris" component={FavoritesStack} />
+      <Tab.Screen name="Paramètre" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

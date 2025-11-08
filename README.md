@@ -13,6 +13,14 @@ dans plays store telecharger l'application Acheter-louer Achat-location
 2-internationnalisation react-native-localize détecte la langue du téléphone automatiquement. i18next
  service de gestion de contenu multilingue Lokalise, Crowdin, Phrase, Transifex
 
+# pour la pagination
+npm install react-native-paper
+
+# React native modals
+npm install react-native-modal
+
+# pour la pagination
+npm install react-native-paper
 
 rmdir /s /q node_modules
 del package-lock.json
@@ -26,3 +34,5 @@ rmdir /s /q node_modules && del package-lock.json
 un petit script .bat (fichier Windows) que tu pourras lancer à chaque fois pour faire ce nettoyage automatique ? interressant
 
 installer les types pour uid npx expo install @types/uuid
+
+# Tuto React Native : Slider de présentation avec pagination
