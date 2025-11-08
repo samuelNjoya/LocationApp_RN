@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Feather, AntDesign, Ionicons } from '@expo/vector-icons';
+// Import du hook useAuth réel
+import { useAuth } from "../../contexts/AuthContext";
 // Assurez-vous d'importer useTheme depuis le bon chemin
 import { useTheme } from '../../contexts/ThemeContext'; 
 import { FONTS } from '../../assets/Theme';
@@ -78,12 +80,33 @@ export default function SettingsScreen({ navigation }) {
         currentFontSizeLabel,
         currentFontScale 
     } = useTheme();
+
+     // Hook d'authentification réel
+      const { user, logout } = useAuth();
     
     // Fonctionnalités factices pour les démos de navigation
     const handleNavigation = (screen) => {
         // navigation.navigate(screen); // Décommenter si les routes existent
         console.log(`Naviguer vers : ${screen}`);
     };
+
+     // --- Fonction de déconnexion (Logique inchangée) ---
+      const handleLogout = () => {
+        Alert.alert(
+          "Déconnexion",
+          "Voulez-vous vraiment vous déconnecter ?",
+          [
+            { text: "Annuler", style: "cancel" },
+            {
+              text: "Oui",
+              onPress: async () => {
+                await logout();
+                navigation.replace('Login');
+              },
+            },
+          ]
+        );
+      };
 
     return (
         <ScrollView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -100,10 +123,10 @@ export default function SettingsScreen({ navigation }) {
                     <MaterialCommunityIcons name="account-circle" size={50} color={colors.primary} />
                     <View style={styles.profileInfo}>
                         <Text style={[styles.profileName, { color: colors.textPrimary, fontSize: 16 * currentFontScale, fontFamily: FONTS.Poppins_Medium }]}>
-                            John Doe
+                            {user?.name || "Invité"}
                         </Text>
                         <Text style={[styles.profileEmail, { color: colors.textSecondary, fontSize: 13 * currentFontScale }]}>
-                            john.doe@email.com
+                            {user?.email || "Email non spécifié"}
                         </Text>
                     </View>
                 </TouchableOpacity>
@@ -118,7 +141,7 @@ export default function SettingsScreen({ navigation }) {
                 />
                 <SettingItem 
                     icon="home-city-outline" 
-                    label="Gérer les Annonces" 
+                    label="Gérer Mes Annonces" 
                     onPress={() => handleNavigation('ManageListings')}
                     iconPack={MaterialCommunityIcons}
                 />
@@ -229,7 +252,8 @@ export default function SettingsScreen({ navigation }) {
                 {/* Bouton de Déconnexion */}
                 <TouchableOpacity 
                     style={[styles.logoutButton, { backgroundColor: colors.error + '10' }]} 
-                    onPress={() => console.log('Déconnexion...')}
+                    // onPress={() => console.log('Déconnexion...')}
+                    onPress={handleLogout}
                 >
                     <MaterialCommunityIcons name="logout" size={20} color={colors.error} />
                     <Text style={[styles.logoutText, { color: colors.error, fontSize: 15 * currentFontScale, fontFamily: FONTS.Poppins_Medium }]}>

@@ -1,5 +1,3 @@
-// --- ThemeContext.js ---
-
 import React, { createContext, useState, useContext, useMemo } from 'react';
 
 // --- A. DÉFINITION DES COULEURS ---

@@ -1,11 +1,22 @@
 import React, { useState } from "react";
-import {View,Text,TextInput,TouchableOpacity,StyleSheet,Alert,ScrollView,Image,Button,Platform,KeyboardAvoidingView,} from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  Image,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
 import { Formik } from "formik";
 import * as ImagePicker from "expo-image-picker";
 import { useProperties } from "../../contexts/PropertyContext";
 import { useToast } from "react-native-toast-notifications";
 import Spinner from "./Spinner";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { propretyHomeValidation } from "../../utils/propertyHomeValidation";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { PropertyHome } from "./Data/defaultProperties";
@@ -21,8 +32,8 @@ interface FormValues {
   price: string;  // car onChangeValue dans les textInput travail avec des string on pourra donc convertir avant d'afficher
   description: string;
   location: string;
-  bedrooms: string; //idem
-  bathrooms: string; //idem
+  bedrooms: string;
+  bathrooms: string;
   images: string[];
 }
 
@@ -34,8 +45,8 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
   const [imageUris, setImageUris] = useState<string[]>(property.images || []);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // --- Choisir des images ---
-  const pickImages = async (): Promise<void> => {
+  // --- Sélection d’images ---
+  const pickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission refusée", "L'accès à la galerie est nécessaire pour choisir des photos.");
@@ -58,11 +69,11 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
     }
   };
 
-  const removeImage = (uri: string): void => {
+  const removeImage = (uri: string) => {
     setImageUris((prev) => prev.filter((imgUri) => imgUri !== uri));
   };
 
-  const handleSubmit = (values: FormValues): void => {
+  const handleSubmit = (values: FormValues) => {
     if (imageUris.length === 0) {
       Alert.alert("Erreur", "Veuillez sélectionner au moins une image.");
       return;
@@ -84,10 +95,8 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
         type: "success",
         placement: "top",
         duration: 2000,
-       // offset: 90,
         animationType: "zoom-in",
         successIcon: <Ionicons name="checkmark-circle-sharp" size={24} color="white" />,
-        dangerIcon: <AntDesign name="close-circle" size={24} color="white" />,
       });
       navigation.goBack();
     }, 1500);
@@ -96,9 +105,17 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: "#e9f5f3" }}
+      style={{ flex: 1, backgroundColor: "#f3f7f5" }}
     >
       <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.headerCard}>
+          <FontAwesome5 name="edit" size={26} color="#fff" />
+          <Text style={styles.headerTitle}>Modifier l'annonce</Text>
+          <Text style={styles.headerSubtitle}>
+            Apportez les modifications souhaitées puis validez ci-dessous
+          </Text>
+        </View>
+
         <Formik
           initialValues={{
             title: property.title,
@@ -114,68 +131,96 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
           enableReinitialize
         >
           {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-            <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Titre"
-                value={values.title}
-                onChangeText={handleChange("title")}
-                onBlur={handleBlur("title")}
-              />
+            <View style={styles.formContainer}>
+              {/* --- Champ Titre --- */}
+              <View style={styles.inputGroup}>
+                <Ionicons name="home-outline" size={22} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Titre de l'annonce"
+                  value={values.title}
+                  onChangeText={handleChange("title")}
+                  onBlur={handleBlur("title")}
+                />
+              </View>
               {touched.title && errors.title && <Text style={styles.error}>{errors.title}</Text>}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Prix"
-                keyboardType="numeric"
-                value={values.price}
-                onChangeText={handleChange("price")}
-                onBlur={handleBlur("price")}
-              />
+              {/* --- Champ Prix --- */}
+              <View style={styles.inputGroup}>
+                <MaterialIcons name="attach-money" size={22} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Prix (FCFA)"
+                  keyboardType="numeric"
+                  value={values.price}
+                  onChangeText={handleChange("price")}
+                  onBlur={handleBlur("price")}
+                />
+              </View>
               {touched.price && errors.price && <Text style={styles.error}>{errors.price}</Text>}
 
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Description"
-                multiline
-                value={values.description}
-                onChangeText={handleChange("description")}
-                onBlur={handleBlur("description")}
-              />
+              {/* --- Champ Description --- */}
+              <View style={styles.inputGroup}>
+                <Ionicons name="document-text-outline" size={22} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={[styles.input, { height: 90 }]}
+                  placeholder="Description de l'annonce"
+                  multiline
+                  value={values.description}
+                  onChangeText={handleChange("description")}
+                  onBlur={handleBlur("description")}
+                />
+              </View>
               {touched.description && errors.description && <Text style={styles.error}>{errors.description}</Text>}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Localisation"
-                value={values.location}
-                onChangeText={handleChange("location")}
-                onBlur={handleBlur("location")}
-              />
+              {/* --- Champ Localisation --- */}
+              <View style={styles.inputGroup}>
+                <Ionicons name="location-outline" size={22} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Localisation"
+                  value={values.location}
+                  onChangeText={handleChange("location")}
+                  onBlur={handleBlur("location")}
+                />
+              </View>
               {touched.location && errors.location && <Text style={styles.error}>{errors.location}</Text>}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Nombre de chambres"
-                keyboardType="numeric"
-                value={values.bedrooms}
-                onChangeText={handleChange("bedrooms")}
-                onBlur={handleBlur("bedrooms")}
-              />
+              {/* --- Chambres --- */}
+              <View style={styles.inputGroup}>
+                <FontAwesome5 name="bed" size={20} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre de chambres"
+                  keyboardType="numeric"
+                  value={values.bedrooms}
+                  onChangeText={handleChange("bedrooms")}
+                  onBlur={handleBlur("bedrooms")}
+                />
+              </View>
               {touched.bedrooms && errors.bedrooms && <Text style={styles.error}>{errors.bedrooms}</Text>}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Nombre de salles de bain"
-                keyboardType="numeric"
-                value={values.bathrooms}
-                onChangeText={handleChange("bathrooms")}
-                onBlur={handleBlur("bathrooms")}
-              />
+              {/* --- Salles de bain --- */}
+              <View style={styles.inputGroup}>
+                <FontAwesome5 name="bath" size={20} color="#2a9d8f" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nombre de salles de bain"
+                  keyboardType="numeric"
+                  value={values.bathrooms}
+                  onChangeText={handleChange("bathrooms")}
+                  onBlur={handleBlur("bathrooms")}
+                />
+              </View>
               {touched.bathrooms && errors.bathrooms && <Text style={styles.error}>{errors.bathrooms}</Text>}
 
-              <View style={styles.imagePickerContainer}>
-                <Button title="Modifier les photos" onPress={pickImages} />
-                {touched.images && errors.images && <Text style={styles.error}>{errors.images}</Text>}
+              {/* --- Gestion d’images --- */}
+              <View style={styles.imagePickerCard}>
+                <TouchableOpacity style={styles.pickButton} onPress={pickImages}>
+                  <AntDesign name="picture" size={22} color="#fff" />
+                  <Text style={styles.pickButtonText}>Modifier les images</Text>
+                </TouchableOpacity>
+
                 <ScrollView horizontal showsHorizontalScrollIndicator style={styles.imagePreviewContainer}>
                   {imageUris.map((uri) => (
                     <View key={uri} style={styles.imageWrapper}>
@@ -188,12 +233,15 @@ const EditPropertyScreen: React.FC<EditPropertyScreenProps> = ({ route, navigati
                 </ScrollView>
               </View>
 
-              <TouchableOpacity style={styles.button} onPress={() => handleSubmit()}>
-                <Text style={styles.buttonText}>Modifier l'annonce</Text>
+              {/* --- Bouton de soumission --- */}
+              <TouchableOpacity style={styles.submitButton} onPress={() => handleSubmit()}>
+                <Ionicons name="save-outline" size={22} color="white" />
+                <Text style={styles.submitButtonText}>Sauvegarder les modifications</Text>
               </TouchableOpacity>
             </View>
           )}
         </Formik>
+
         <Spinner visible={isLoading} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -204,34 +252,75 @@ export default EditPropertyScreen;
 
 const styles = StyleSheet.create({
   container: {
+    padding: 18,
+    paddingBottom: 50,
+  },
+  headerCard: {
+    backgroundColor: "#2a9d8f",
+    borderRadius: 16,
     padding: 20,
+    alignItems: "center",
+    marginBottom: 20,
+    elevation: 5,
+  },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 10,
+  },
+  headerSubtitle: {
+    color: "#e0f2f1",
+    textAlign: "center",
+    marginTop: 6,
+  },
+  formContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 15,
+    elevation: 4,
+  },
+  inputGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  icon: {
+    marginRight: 8,
   },
   input: {
-    backgroundColor: "white",
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
+    flex: 1,
+    height: 50,
     fontSize: 16,
   },
   error: {
-    color: "red",
+    color: "#e63946",
     marginBottom: 6,
+    marginLeft: 10,
   },
-  button: {
-    marginTop: 20,
+  imagePickerCard: {
+    marginTop: 10,
+    backgroundColor: "#eef9f7",
+    borderRadius: 12,
+    padding: 10,
+  },
+  pickButton: {
     backgroundColor: "#2a9d8f",
-    padding: 15,
-    borderRadius: 10,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  buttonText: {
+  pickButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 18,
-  },
-  imagePickerContainer: {
-    marginTop: 10,
-    marginBottom: 20,
+    marginLeft: 8,
   },
   imagePreviewContainer: {
     marginTop: 10,
@@ -259,5 +348,22 @@ const styles = StyleSheet.create({
   removeButtonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 14,
+  },
+  submitButton: {
+    backgroundColor: "#2a9d8f",
+    height: 55,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    flexDirection: "row",
+    gap: 8,
+    elevation: 6,
+  },
+  submitButtonText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: 18,
   },
 });

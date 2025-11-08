@@ -1,11 +1,22 @@
 import React from 'react';
 import { ScrollView, Text, StyleSheet, SafeAreaView, Image, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
-import { COLORS } from '../../assets/Theme';
+// Importation du contexte de thème
+import { useTheme } from '../../contexts/ThemeContext';
+// Assurez-vous d'importer FONTS si vous l'utilisez pour les styles (non inclus dans le code fourni, mais bonne pratique)
+// import { FONTS } from '../../assets/Theme'; 
 
 export default function HomeScreen() {
+  // 1. Utiliser le hook useTheme pour accéder aux variables globales
+  const { colors, currentFontScale } = useTheme();
+
+  // Fonction pour ajuster dynamiquement la taille de la police
+  const adjustFontSize = (baseSize) => baseSize * currentFontScale;
+
+  // Remplacement de tous les styles pour utiliser les couleurs et l'échelle de police du contexte
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#e9f5f3' }}>
+    // Utiliser colors.background pour le SafeAreaView
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Bannière */}
         <View style={styles.banner}>
@@ -13,48 +24,56 @@ export default function HomeScreen() {
             source={{ uri: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80' }}
             style={styles.bannerImage}
           />
-          <Text style={styles.bannerTitle}>Bienvenue sur SMARTHOME</Text>
+          <Text style={[styles.bannerTitle, { fontSize: adjustFontSize(26) }]}>
+            Bienvenue sur SMARTHOME
+          </Text>
         </View>
 
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: adjustFontSize(16) }]}>
           Trouvez ou publiez les meilleures annonces immobilières locales au Cameroun
         </Text>
 
         {/* Fonctionnalités */}
-        <Text style={styles.sectionTitle}>Fonctionnalités</Text>
+        {/* Utiliser colors.textPrimary ou secondary pour les titres de section */}
+        <Text style={[styles.sectionTitle, { color: colors.primary, fontSize: adjustFontSize(20) }]}>
+          Fonctionnalités
+        </Text>
         <View style={styles.featuresContainer}>
-          <View style={styles.featureCard}>
-            <Ionicons name="search-outline" size={36} color={COLORS.primary} />
-            <Text style={styles.featureText}>Recherche avancée</Text>
+          {/* Les featureCard utilisent colors.surface pour le fond */}
+          <View style={[styles.featureCard, { backgroundColor: colors.surface }]}>
+            <Ionicons name="search-outline" size={adjustFontSize(36)} color={colors.accent} />
+            <Text style={[styles.featureText, { color: colors.secondary, fontSize: adjustFontSize(14) }]}>Recherche avancée</Text>
           </View>
-          <View style={styles.featureCard}>
-            <MaterialCommunityIcons name="camera-plus-outline" size={36} color={COLORS.primary} />
-            <Text style={styles.featureText}>Publier annonces</Text>
+          <View style={[styles.featureCard, { backgroundColor: colors.surface }]}>
+            <MaterialCommunityIcons name="camera-plus-outline" size={adjustFontSize(36)} color={colors.accent} />
+            <Text style={[styles.featureText, { color: colors.secondary, fontSize: adjustFontSize(14) }]}>Publier annonces</Text>
           </View>
-          <View style={styles.featureCard}>
-            <FontAwesome5 name="user-edit" size={36} color={COLORS.primary} />
-            <Text style={styles.featureText}>Gérer vos annonces</Text>
+          <View style={[styles.featureCard, { backgroundColor: colors.surface }]}>
+            <FontAwesome5 name="user-edit" size={adjustFontSize(36)} color={colors.accent} />
+            <Text style={[styles.featureText, { color: colors.secondary, fontSize: adjustFontSize(14) }]}>Gérer vos annonces</Text>
           </View>
-          <View style={styles.featureCard}>
-            <Ionicons name="chatbox-ellipses-outline" size={36} color={COLORS.primary} />
-            <Text style={styles.featureText}>Communiquer</Text>
+          <View style={[styles.featureCard, { backgroundColor: colors.surface }]}>
+            <Ionicons name="chatbox-ellipses-outline" size={adjustFontSize(36)} color={colors.accent} />
+            <Text style={[styles.featureText, { color: colors.secondary, fontSize: adjustFontSize(14) }]}>Communiquer</Text>
           </View>
         </View>
 
         {/* Highlights */}
-        <Text style={styles.sectionTitle}>Pourquoi choisir SMARTHOME ?</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary, fontSize: adjustFontSize(20) }]}>
+          Pourquoi choisir SMARTHOME ?
+        </Text>
         <View style={styles.highlightContainer}>
-          <Text style={styles.highlight}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} /> Recherche pratique avec cartes et filtres avancés
+          <Text style={[styles.highlight, { color: colors.textPrimary, fontSize: adjustFontSize(16) }]}>
+            <Ionicons name="checkmark-circle" size={adjustFontSize(20)} color={colors.primary} /> Recherche pratique avec cartes et filtres avancés
           </Text>
-          <Text style={styles.highlight}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} /> Publication facile d’annonces avec photos
+          <Text style={[styles.highlight, { color: colors.textPrimary, fontSize: adjustFontSize(16) }]}>
+            <Ionicons name="checkmark-circle" size={adjustFontSize(20)} color={colors.primary} /> Publication facile d’annonces avec photos
           </Text>
-          <Text style={styles.highlight}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} /> Gestion personnelle simplifiée
+          <Text style={[styles.highlight, { color: colors.textPrimary, fontSize: adjustFontSize(16) }]}>
+            <Ionicons name="checkmark-circle" size={adjustFontSize(20)} color={colors.primary} /> Gestion personnelle simplifiée
           </Text>
-          <Text style={styles.highlight}>
-            <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} /> Communication intégrée avec les autres utilisateurs
+          <Text style={[styles.highlight, { color: colors.textPrimary, fontSize: adjustFontSize(16) }]}>
+            <Ionicons name="checkmark-circle" size={adjustFontSize(20)} color={colors.primary} /> Communication intégrée avec les autres utilisateurs
           </Text>
         </View>
       </ScrollView>
@@ -62,7 +81,13 @@ export default function HomeScreen() {
   );
 }
 
+// Les styles restent en grande partie inchangés, mais nous ajoutons la propriété safeArea
+// pour éviter d'appliquer le style de fond deux fois et simplifier la lisibilité.
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    // La couleur de fond sera définie dynamiquement dans le composant
+  },
   container: {
     padding: 20,
   },
@@ -79,24 +104,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 15,
     left: 20,
-    fontSize: 26,
-    fontWeight: 'bold',
+    // Reste blanc pour garantir la lisibilité sur l'image
     color: 'white',
+    fontWeight: 'bold',
     textShadowColor: '#000',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
+    // Les couleurs et tailles sont définies dynamiquement dans le composant
     lineHeight: 24,
     marginBottom: 25,
-    color: '#555',
   },
   sectionTitle: {
-    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
-    color: COLORS.primary,
   },
   featuresContainer: {
     flexDirection: 'row',
@@ -106,7 +128,7 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: '48%',
-    backgroundColor: 'white',
+    // La couleur de fond est définie dynamiquement
     borderRadius: 15,
     padding: 15,
     alignItems: 'center',
@@ -117,14 +139,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontWeight: '600',
     textAlign: 'center',
-    color: '#264653',
+    // La couleur est définie dynamiquement
   },
   highlightContainer: {
     marginTop: 10,
   },
   highlight: {
-    fontSize: 16,
     marginBottom: 8,
-    color: '#555',
+    // Les couleurs et tailles sont définies dynamiquement
   },
 });

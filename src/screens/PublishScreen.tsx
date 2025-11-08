@@ -1,251 +1,234 @@
-import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Button, Alert, Text, ScrollView, Image, TouchableOpacity, Platform, KeyboardAvoidingView, } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import { Video } from 'expo-av';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Platform,
+  KeyboardAvoidingView,
+  Alert,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import { Video } from "expo-av";
+import { AntDesign, Ionicons, MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
+import { useProperties } from "../../contexts/PropertyContext";
+import { useAuth } from "../../contexts/AuthContext";
+import Spinner from "../components/Spinner";
+import { useToast } from "react-native-toast-notifications";
 
-// Contextes et composants
-import { useProperties } from '../../contexts/PropertyContext';
-import { useAuth } from '../../contexts/AuthContext'; // <--- IMPORT AJOUTÉ
-import Spinner from '../components/Spinner';
-import { useToast } from 'react-native-toast-notifications';
-
-// Icônes
-import { AntDesign, Ionicons } from '@expo/vector-icons';
-
-
-// Définition du typage de navigation (ajustez selon votre structure réelle)
-type RootStackParamList = {
-  Publish: undefined;
-  // Ajoutez d'autres écrans si nécessaire
-};
-
-type PublishScreenProps = NativeStackScreenProps<RootStackParamList, 'Publish'>;
-
-// Schéma de validation avec Yup pour les champs du formulaire
+// --- Validation du formulaire ---
 const validationSchema = Yup.object().shape({
-  title: Yup.string().required('Le titre est obligatoire'),
-  price: Yup.number().typeError('Le prix doit être un nombre').positive('Le prix doit être positif').required('Le prix est obligatoire'),
-  description: Yup.string().required('La description est obligatoire'),
-  location: Yup.string().required('La localisation est obligatoire'),
-  bedrooms: Yup.number().typeError('Le nombre de chambres doit être un nombre').min(0, 'Doit être positif').required('Nombre de chambres requis'),
-  bathrooms: Yup.number().typeError('Le nombre de salles de bain doit être un nombre').min(0, 'Doit être positif').required('Nombre de salles de bain requis'),
-  images: Yup.array().min(1, 'Au moins une image est requise'),
+  title: Yup.string().required("Le titre est obligatoire"),
+  price: Yup.number().typeError("Le prix doit être un nombre").positive("Doit être positif").required(),
+  description: Yup.string().required("La description est obligatoire"),
+  location: Yup.string().required("La localisation est obligatoire"),
+  bedrooms: Yup.number().typeError("Nombre invalide").min(0).required(),
+  bathrooms: Yup.number().typeError("Nombre invalide").min(0).required(),
+  images: Yup.array().min(1, "Au moins une image est requise"),
 });
 
-export default function PublishScreen({ navigation }: PublishScreenProps) {
+export default function PublishScreen() {
   const { addProperty } = useProperties();
-  const { user } = useAuth(); // <--- UTILISATION DU CONTEXTE AUTH
+  const { user } = useAuth();
   const Toast = useToast();
+
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Demande les permissions et ouvre la galerie pour sélectionner plusieurs images
+  // --- Choix d'images ---
   const pickImages = async () => {
-    // Demander la permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'L\'accès à la galerie est nécessaire pour choisir des photos.');
+    if (status !== "granted") {
+      Alert.alert("Permission refusée", "Autorisez l’accès à la galerie pour continuer.");
       return;
     }
 
-    try {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        allowsMultipleSelection: true,
-        quality: 0.7,
-        mediaTypes: ImagePicker.MediaTypeOptions.All, // Permet images et vidéos
-      });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsMultipleSelection: true,
+      quality: 0.7,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+    });
 
-      if (!result.canceled) {
-        const uris = result.assets ? result.assets.map(asset => asset.uri) : [];
-        setImageUris((prev) => [...prev, ...uris]);
-
-        // Mettre à jour Formik manuellement (bien que Formik soit mis à jour dans onSubmit)
-        // C'est juste pour s'assurer que Yup voie la liste dans la validation live
-        // Pas nécessaire ici mais bonne pratique si la validation est en temps réel
-      }
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de sélectionner des images.');
-      console.error('Erreur de sélection d\'images:', error);
+    if (!result.canceled) {
+      const uris = result.assets?.map((a) => a.uri) || [];
+      setImageUris((prev) => [...prev, ...uris]);
     }
   };
 
-  // Supprimer une image choisie
-  const removeImage = (uri: string) => {
-    setImageUris((prev) => prev.filter(imgUri => imgUri !== uri));
-  };
+  const removeImage = (uri: string) => setImageUris((prev) => prev.filter((img) => img !== uri));
 
-  const isVideo = (uri: string): boolean => {
-    return /\.(mp4|mov|avi|mkv|webm)$/i.test(uri); // Vérifie l'extension video
-  };
-
+  const isVideo = (uri: string) => /\.(mp4|mov|avi|mkv|webm)$/i.test(uri);
 
   return (
     <Formik
       initialValues={{
-        title: '',
-        price: '',
-        description: '',
-        location: '',
-        bedrooms: '',
-        bathrooms: '',
-        images: [], // Ceci est utilisé uniquement pour la validation Yup
+        title: "",
+        price: "",
+        description: "",
+        location: "",
+        bedrooms: "",
+        bathrooms: "",
+        images: [],
       }}
       validationSchema={validationSchema}
       onSubmit={(values, { resetForm }) => {
-
         if (!user?.id) {
-          Alert.alert('Erreur', 'Vous devez être connecté pour publier une annonce.');
+          Alert.alert("Erreur", "Vous devez être connecté pour publier.");
           return;
         }
 
-        // --- CRITIQUE : AJOUT DU ownerId DE L'UTILISATEUR ---
         const newProperty = {
           id: Date.now(),
           title: values.title,
-         // price: parseInt(values.price as string),
-         price: parseInt(values.price),
+          price: parseInt(values.price),
           description: values.description,
           location: values.location,
-          // bedrooms: parseInt(values.bedrooms as string),
-          // bathrooms: parseInt(values.bathrooms as string),
           bedrooms: parseInt(values.bedrooms),
           bathrooms: parseInt(values.bathrooms),
           images: imageUris,
-          owner: user.name || 'Inconnu', // Affichage
-          ownerId: user.id, // <--- SOLUTION : AJOUT DU ownerId POUR LE FILTRAGE !
+          owner: user.name || "Inconnu",
+          ownerId: user.id,
         };
 
         setIsLoading(true);
         setTimeout(() => {
           addProperty(newProperty);
           setIsLoading(false);
-          Toast.show("Annonce publiée !", {
-            type: 'success',
+          Toast.show("Annonce publiée avec succès !", {
+            type: "success",
             placement: "top",
-            duration: 2000,
-         //   offset: 90,
-            animationType: "zoom-in",
-            successIcon: <Ionicons name="checkmark-circle-sharp" size={24} color="white" />
+            animationType: "slide-in",
+            successIcon: <Ionicons name="checkmark-circle" size={24} color="white" />,
           });
           resetForm();
           setImageUris([]);
         }, 1500);
-
-
       }}
     >
       {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1, backgroundColor: '#e9f5f3' }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, backgroundColor: "#f4f9f8" }}
         >
           <ScrollView contentContainerStyle={styles.container}>
-            {/* Champs texte */}
-            <TextInput
-              style={styles.input}
-              placeholder="Titre"
-              onChangeText={handleChange('title')}
-              onBlur={handleBlur('title')}
-              value={values.title}
-            />
-            {touched.title && errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Prix (FCFA)"
-              keyboardType="numeric"
-              onChangeText={handleChange('price')}
-              onBlur={handleBlur('price')}
-              value={values.price}
-            />
-            {touched.price && errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-
-            <TextInput
-              style={[styles.input, { height: 80 }]}
-              placeholder="Description"
-              multiline
-              onChangeText={handleChange('description')}
-              onBlur={handleBlur('description')}
-              value={values.description}
-            />
-            {touched.description && errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Localisation"
-              onChangeText={handleChange('location')}
-              onBlur={handleBlur('location')}
-              value={values.location}
-            />
-            {touched.location && errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de chambres"
-              keyboardType="numeric"
-              onChangeText={handleChange('bedrooms')}
-              onBlur={handleBlur('bedrooms')}
-              value={values.bedrooms}
-            />
-            {touched.bedrooms && errors.bedrooms && <Text style={styles.errorText}>{errors.bedrooms}</Text>}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de salles de bain"
-              keyboardType="numeric"
-              onChangeText={handleChange('bathrooms')}
-              onBlur={handleBlur('bathrooms')}
-              value={values.bathrooms}
-            />
-            {touched.bathrooms && errors.bathrooms && <Text style={styles.errorText}>{errors.bathrooms}</Text>}
-
-            {/* Sélecteur d’images */}
-            <View style={styles.imagePickerContainer}>
-              <Button color="#2a9d8f" title={`Choisir des photos/vidéos (${imageUris.length})`} onPress={pickImages} />
-              {imageUris.length === 0 && <Text style={styles.errorText}>Au moins une image ou vidéo est requise.</Text>}
-
-              {/* Aperçu des images sélectionnées  */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.imagePreviewContainer}>
-                {imageUris.map((uri) => {
-                  return (
-                    <View key={uri} style={styles.imageWrapper}>
-                      {isVideo(uri) ? (
-                        <Video
-                          source={{ uri }}
-                          style={styles.videoPreview}
-                          useNativeControls
-                          resizeMode="cover"
-                          isLooping
-                        />
-                      ) : (
-                        <Image source={{ uri }} style={styles.imagePreview} />
-                      )}
-                      <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
-                        <Text style={styles.removeButtonText}>X</Text>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
-              </ScrollView>
-
+            {/* HEADER */}
+            <View style={styles.header}>
+              <Ionicons name="home-outline" size={30} color="#2a9d8f" />
+              <Text style={styles.headerTitle}>Publier une Annonce</Text>
             </View>
 
-            {/* Bouton soumettre */}
-            <TouchableOpacity style={styles.submitButton} onPress={() => {
-              // Valide aussi la présence d'au moins une image avant soumission
-              if (imageUris.length === 0) {
-                Alert.alert('Erreur', 'Veuillez sélectionner au moins une image ou vidéo.');
-                return;
-              }
-              // Met à jour la value images dans Formik pour la validation
-              values.images = imageUris as any; // Type assertion pour la validation
-              handleSubmit();
-            }}>
-              <Text style={styles.submitButtonText}>Publier l'Annonce</Text>
+            {/* CHAMPS DE SAISIE */}
+            <View style={styles.card}>
+              <InputField
+                icon={<Ionicons name="pricetag-outline" size={20} color="#2a9d8f" />}
+                placeholder="Titre de l'annonce"
+                value={values.title}
+                onChangeText={handleChange("title")}
+                onBlur={handleBlur("title")}
+              />
+              {touched.title && errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
+
+              <InputField
+                icon={<FontAwesome name="money" size={20} color="#2a9d8f" />}
+                placeholder="Prix (FCFA)"
+                keyboardType="numeric"
+                value={values.price}
+                onChangeText={handleChange("price")}
+                onBlur={handleBlur("price")}
+              />
+              {touched.price && errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
+
+              <InputField
+                icon={<Ionicons name="location-outline" size={20} color="#2a9d8f" />}
+                placeholder="Localisation"
+                value={values.location}
+                onChangeText={handleChange("location")}
+                onBlur={handleBlur("location")}
+              />
+              {touched.location && errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
+
+              <InputField
+                icon={<Ionicons name="bed-outline" size={20} color="#2a9d8f" />}
+                placeholder="Nombre de chambres"
+                keyboardType="numeric"
+                value={values.bedrooms}
+                onChangeText={handleChange("bedrooms")}
+                onBlur={handleBlur("bedrooms")}
+              />
+              {touched.bedrooms && errors.bedrooms && <Text style={styles.errorText}>{errors.bedrooms}</Text>}
+
+              <InputField
+                icon={<MaterialCommunityIcons name="shower" size={20} color="#2a9d8f" />}
+                placeholder="Nombre de salles de bain"
+                keyboardType="numeric"
+                value={values.bathrooms}
+                onChangeText={handleChange("bathrooms")}
+                onBlur={handleBlur("bathrooms")}
+              />
+              {touched.bathrooms && errors.bathrooms && <Text style={styles.errorText}>{errors.bathrooms}</Text>}
+
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Description du bien..."
+                multiline
+                numberOfLines={4}
+                value={values.description}
+                onChangeText={handleChange("description")}
+                onBlur={handleBlur("description")}
+              />
+              {touched.description && errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+            </View>
+
+            {/* IMAGE PICKER */}
+            <View style={styles.imageSection}>
+              <View style={styles.imageHeader}>
+                <Ionicons name="images-outline" size={22} color="#2a9d8f" />
+                <Text style={styles.imageHeaderText}>Photos / Vidéos</Text>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagePreviewContainer}>
+                {imageUris.map((uri) => (
+                  <View key={uri} style={styles.imageWrapper}>
+                    {isVideo(uri) ? (
+                      <Video source={{ uri }} style={styles.media} useNativeControls resizeMode="cover" />
+                    ) : (
+                      <Image source={{ uri }} style={styles.media} />
+                    )}
+                    <TouchableOpacity style={styles.removeButton} onPress={() => removeImage(uri)}>
+                      <AntDesign name="closecircle" size={22} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity style={styles.addButton} onPress={pickImages}>
+                <Ionicons name="add-circle" size={40} color="#2a9d8f" />
+                <Text style={styles.addText}>Ajouter une image</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* BOUTON DE PUBLICATION */}
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => {
+                if (imageUris.length === 0) {
+                  Alert.alert("Erreur", "Veuillez ajouter au moins une image.");
+                  return;
+                }
+                values.images = imageUris as any;
+                handleSubmit();
+              }}
+            >
+              <Ionicons name="megaphone-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.submitButtonText}>Publier l’annonce</Text>
             </TouchableOpacity>
+
             <Spinner visible={isLoading} />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -254,94 +237,65 @@ export default function PublishScreen({ navigation }: PublishScreenProps) {
   );
 }
 
+// --- Composant champ de saisie avec icône ---
+const InputField = ({ icon, ...props }: any) => (
+  <View style={styles.inputContainer}>
+    {icon}
+    <TextInput style={styles.input} {...props} />
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingBottom: 50, // pour laisser de l'espace en bas
-  },
-  input: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    height: 50,
-    marginBottom: 12,
-    fontSize: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  errorText: {
-    color: '#e63946',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  imagePickerContainer: {
-    marginTop: 10,
+  container: { padding: 20 },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+  headerTitle: { fontSize: 22, fontWeight: "700", marginLeft: 10, color: "#264653" },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 15,
+    elevation: 3,
     marginBottom: 20,
-    padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 1,
+    shadowRadius: 4,
   },
-  imagePreviewContainer: {
-    marginTop: 10,
-    maxHeight: 120,
-  },
-  videoPreview: {
-    width: 100,
-    height: 100,
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f6f6f6",
     borderRadius: 12,
-    backgroundColor: '#000',
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
-  imageWrapper: {
-    position: 'relative',
-    marginRight: 10,
+  input: { flex: 1, padding: 10, fontSize: 15 },
+  textArea: { minHeight: 80, textAlignVertical: "top" },
+  errorText: { color: "#e63946", fontSize: 13, marginBottom: 8 },
+  imageSection: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 15,
+    marginBottom: 25,
+    elevation: 3,
   },
-  imagePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: '#e63946',
-    borderRadius: 14,
-    width: 26,
-    height: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  removeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
+  imageHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  imageHeaderText: { marginLeft: 8, fontWeight: "600", color: "#264653" },
+  imagePreviewContainer: { flexDirection: "row" },
+  imageWrapper: { position: "relative", marginRight: 10 },
+  media: { width: 100, height: 100, borderRadius: 12 },
+  removeButton: { position: "absolute", top: 5, right: 5, backgroundColor: "#e63946", borderRadius: 50, padding: 2 },
+  addButton: { flexDirection: "row", alignItems: "center", marginTop: 15 },
+  addText: { color: "#2a9d8f", fontWeight: "600", marginLeft: 8 },
   submitButton: {
-    backgroundColor: '#2a9d8f',
-    height: 55,
+    flexDirection: "row",
+    backgroundColor: "#2a9d8f",
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 55,
+    elevation: 4,
+    shadowColor: "#000",
   },
-  submitButtonText: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 18,
-  },
+  submitButtonText: { color: "white", fontWeight: "700", fontSize: 18 },
 });

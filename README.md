@@ -36,3 +36,22 @@ un petit script .bat (fichier Windows) que tu pourras lancer à chaque fois pour
 installer les types pour uid npx expo install @types/uuid
 
 # Tuto React Native : Slider de présentation avec pagination
+
+
+(comme Airbnb ou Jumia House).
+ <!-- pour les animations -->
+npm install moti
+//dependance neccessaires 
+npm install react-native-reanimated
+importer au dessus du app.js import 'react-native-reanimated';
+
+ex <MotiView
+  from={{ opacity: 0, translateY: 20 }}
+  animate={{ opacity: 1, translateY: 0 }}
+  transition={{ type: 'timing', duration: 600 }}
+>
+  <Text>Contenu animé 🎬</Text>
+</MotiView>
+
+Expo s’en sert pour générer automatiquement les icônes Android et iOS lors du build
+je peux utiliser la meme image pour les 4
