@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { COLORS } from "../../assets/Theme";
-import { useAuth } from "../../contexts/AuthContext";
+import { COLORS, FONTS } from "../../../assets/Theme";
+import { useAuth } from "../../../contexts/AuthContext";
 import { useToast } from "react-native-toast-notifications";
+import { Fontisto, Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -10,6 +11,8 @@ export default function LoginScreen({ navigation }: any) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -30,20 +33,34 @@ export default function LoginScreen({ navigation }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>Connexion</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mot de passe"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputField}
+          placeholder="Email"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TouchableOpacity style={styles.icon}>
+          <Fontisto name="email" size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+
+
+      {/* Champ Mot de passe avec icône */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputField}
+          placeholder="Mot de passe"
+          secureTextEntry={!isPasswordVisible} // Utilise l'état
+          // secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.icon}>
+          <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.btn} onPress={handleLogin}>
         <Text style={styles.btnText}>Se connecter</Text>
@@ -66,17 +83,38 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily:FONTS.Poppins_Bold,
     marginBottom: 25,
     color: COLORS.primary,
   },
-  input: {
+  // Champ de texte simpple
+  // input: {
+  //   width: "100%",
+  //   backgroundColor: "white",
+  //   borderRadius: 12,
+  //   padding: 12,
+  //   marginBottom: 15,
+  //   elevation: 2,
+  // },
+  // Conteneur pour le champ de texte + icône
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: "100%",
     backgroundColor: "white",
     borderRadius: 12,
-    padding: 12,
     marginBottom: 15,
     elevation: 2,
+    paddingRight: 12, // Espace pour l'icône
+  },
+  // Champ de texte à l'intérieur du conteneur
+  inputField: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+  },
+  icon: {
+    padding: 4,
   },
   btn: {
     backgroundColor: COLORS.primary,

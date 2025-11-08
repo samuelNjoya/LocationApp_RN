@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import 'react-native-get-random-values';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 // J'ai ajouté Ionicons pour les icônes "oeil"
-import { Ionicons } from '@expo/vector-icons'; 
-import { COLORS } from "../../assets/Theme";
-import { useAuth } from "../../contexts/AuthContext";
+import { AntDesign, EvilIcons, Fontisto, Ionicons } from '@expo/vector-icons';
+import { COLORS } from "../../../assets/Theme";
+import { useAuth } from "../../../contexts/AuthContext";
 import { useToast } from "react-native-toast-notifications";
 import { v4 as uuidv4 } from "uuid"; // Cet import est correct
 
@@ -23,7 +23,7 @@ export default function RegisterScreen({ navigation }: any) {
   // États pour gérer la visibilité du mot de passe
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
-  
+
   // État pour le chargement
   const [isLoading, setIsLoading] = useState(false);
 
@@ -75,24 +75,34 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Créer un compte</Text>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputField}
+          placeholder="Nom complet"
+          value={form.name}
+          onChangeText={(text) => handleChange("name", text)}
+          editable={!isLoading} // Non modifiable pendant le chargement
+        />
+        <TouchableOpacity style={styles.icon}>
+          <AntDesign name="user" size={24} color="gray" />
+        </TouchableOpacity>
+      </View> 
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nom complet"
-        value={form.name}
-        onChangeText={(text) => handleChange("name", text)}
-        editable={!isLoading} // Non modifiable pendant le chargement
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(text) => handleChange("email", text)}
-        editable={!isLoading}
-      />
-      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputField}
+          placeholder="Email"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={form.email}
+          onChangeText={(text) => handleChange("email", text)}
+          editable={!isLoading}
+        />
+         <TouchableOpacity style={styles.icon}>
+          <Fontisto name="email" size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+
       {/* Champ Mot de passe avec icône */}
       <View style={styles.inputContainer}>
         <TextInput
@@ -104,7 +114,7 @@ export default function RegisterScreen({ navigation }: any) {
           editable={!isLoading}
         />
         <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)} style={styles.icon}>
-          <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={24} color="gray" />
+          <Ionicons name={isPasswordVisible ? "eye" : "eye-off"} size={24} color="gray" />
         </TouchableOpacity>
       </View>
 
@@ -119,7 +129,7 @@ export default function RegisterScreen({ navigation }: any) {
           editable={!isLoading}
         />
         <TouchableOpacity onPress={() => setIsConfirmVisible(!isConfirmVisible)} style={styles.icon}>
-          <Ionicons name={isConfirmVisible ? "eye-off" : "eye"} size={24} color="gray" />
+          <Ionicons name={isConfirmVisible ? "eye" : "eye-off"} size={24} color="gray" />
         </TouchableOpacity>
       </View>
 
@@ -155,15 +165,15 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   // Style pour les inputs simples (nom, email)
-  input: {
-    width: "100%",
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 15,
-    elevation: 2,
-    fontSize: 16,
-  },
+  // input: {
+  //   width: "100%",
+  //   backgroundColor: "white",
+  //   borderRadius: 12,
+  //   padding: 12,
+  //   marginBottom: 15,
+  //   elevation: 2,
+  //   fontSize: 16,
+  // },
   // Conteneur pour le champ de texte + icône
   inputContainer: {
     flexDirection: 'row',
